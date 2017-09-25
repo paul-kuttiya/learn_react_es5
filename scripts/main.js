@@ -8,6 +8,8 @@ var ReactRouter = require('react-router'),
     Router = ReactRouter.Router,
     Route = ReactRouter.Route,
     History = ReactRouter.History;
+
+var sampleData = require('./sample-fishes');
     
 var createBrowserHistory = require('history/lib/createBrowserHistory');
 
@@ -18,17 +20,73 @@ var App = React.createClass({
       order: {}
     }
   },
-  addfish: function(fish) {
+  addToOrder: function(fish) {
+    this.state.order[fish] = this.state.order[fish] + 1 || 1;
+    this.setState({ order: this.state.order });
+  },
+  addFish: function(fish) {
+    var timestamp = (new Date()).getTime();
+    
+    //update state; fishes obj
+    this.state.fishes['fish' + timestamp] = fish;
 
+    //set state
+    this.setState({ fishes: this.state.fishes })
+  },
+  loadSample: function() {
+    this.setState( {fishes: sampleData} );
+  },
+  renderFish: function(key, i) {
+    return (
+      <Fish key={i + 1} index={i + 1} data={this.state.fishes[key]} addToOrder={this.addToOrder} />
+    )
   },
   render: function() {
     return (
       <div className="catch-of-the-day">
         <div className="menu">
           <Header tagline="SeaFood Market" />
+          <ul className="list-of-fishes">
+            {Object.keys(this.state.fishes).map(this.renderFish)}
+          </ul>
         </div>
         <Order />
-        <Inventory />
+        <Inventory loadSample={this.loadSample} addToOrder={this.addToOrder} />
+      </div>
+    )
+  },
+});
+
+var Fish = React.createClass({
+  clickButton: function(e) {
+    e.preventDefault();
+    console.log('hi')
+  },
+  render: function() {
+    var fish = this.props.data;
+    var isAvailable = (fish.status === "available" ? true : false);
+    var buttonText = (isAvailable ? "Add to Order" : "Sold Out!")
+    return (
+      <li className="menu-fish">
+        <img src={fish.image} alt={fish.name} />
+        <h3 className="fish-name">
+          {fish.name}
+          <span className="price">{h.formatPrice(fish.price)}</span>
+        </h3>
+        <p>{fish.desc}</p>
+        <button disabled={!isAvailable} onClick={this.clickButton}>{buttonText}</button>
+      </li>
+    )
+  },
+});
+
+var Inventory = React.createClass({
+  render: function() {
+    return (
+      <div>
+        <h3>Inventory</h3>
+        <AddFishForm addFish={this.props.addFish} />
+        <button onClick={this.props.loadSample}>Load Sample Data</button>
       </div>
     )
   },
@@ -47,12 +105,13 @@ var AddFishForm = React.createClass({
       image: this.refs.image.value,
     }
 
-    //set obj state
-    // this.setState()
+    //call addFish() method from App as props  
+    this.props.addFish(fish);
+    this.refs.fishForm.reset(); //reset form
   },
   render: function() {
     return (
-      <form className="fish-edit" onSubmit={this.createFish}>
+      <form className="fish-edit" ref="fishForm" onSubmit={this.createFish}>
         <input type="text" ref="name" placeholder="Fish Name"/>
         <input type="text" ref="price" placeholder="Fish Price"/>
         <select ref="status">
@@ -94,17 +153,6 @@ var Order = React.createClass({
   },
 });
 
-var Inventory = React.createClass({
-  render: function() {
-    return (
-      <div>
-        <h3>Inventory</h3>
-        <AddFishForm />
-      </div>
-    )
-  },
-});
-
 var StorePicker = React.createClass({
   mixins: [History],
   goToStore: function(e) {
@@ -142,6 +190,5 @@ var routes = (
     <Route path="*" component={NotFound} />
   </Router>
 )
-
 
 ReactDOM.render(routes, document.querySelector('#main'));
