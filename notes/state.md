@@ -5,3 +5,15 @@
 * determine how component behave  
 ~> create dynamic component  
 
+### Working with state  
+* set App state with `getInitialState`  
+~> will get initial state for App  
+```javascript
+// App component
+getInitialState: function() {
+    return {
+      fishes: {},
+      order: {}
+    }
+  },
+```
