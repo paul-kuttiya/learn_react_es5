@@ -20,6 +20,20 @@ var App = React.createClass({
       order: {}
     }
   },
+  componentDidMount: function() {
+    //load sample when component first initial mount
+    this.loadSample();
+
+    var storage = localStorage.getItem('order-' + this.props.params.storeId);
+
+    //check if exists
+    if (storage) {
+      this.setState({ order: JSON.parse(storage) })
+    }
+  },
+  componentWillUpdate: function(nextProp, nextState) {
+    localStorage.setItem('order-' + this.props.params.storeId, JSON.stringify(nextState.order));
+  },
   addToOrder: function(fish) {
     this.state.order[fish] = this.state.order[fish] + 1 || 1;
     this.setState({ order: this.state.order });
@@ -38,7 +52,7 @@ var App = React.createClass({
   },
   renderFish: function(key, i) {
     return (
-      <Fish key={i + 1} index={i + 1} data={this.state.fishes[key]} addToOrder={this.addToOrder} />
+      <Fish key={i + 1} index={key} data={this.state.fishes[key]} addToOrder={this.addToOrder} />
     )
   },
   render: function() {
@@ -50,8 +64,59 @@ var App = React.createClass({
             {Object.keys(this.state.fishes).map(this.renderFish)}
           </ul>
         </div>
-        <Order />
+        <Order fishes={this.state.fishes} order={this.state.order} />
         <Inventory loadSample={this.loadSample} addToOrder={this.addToOrder} />
+      </div>
+    )
+  },
+});
+
+var Order = React.createClass({
+  orderIds: function() { return Object.keys(this.props.order) },
+  findFish: function(key) { return this.props.fishes[key] },
+  findQuantity: function(key) { return this.props.order[key] },
+  total: function() {
+    var total = 0;
+
+    this.orderIds().forEach(function(order_key) {
+      var fish = this.findFish(order_key), //get fish with order key
+          order_count = this.findQuantity(order_key); //get order value count
+
+      //if fish is available      
+      if (fish && (fish.available)) {
+        total += (parseInt(order_count, 10) * parseInt(fish.price, 10));
+      }
+    }.bind(this));
+
+    return total;
+  },
+  renderOrder: function(order_key, i) {
+    var count = this.findQuantity(order_key),
+        name = this.findFish(order_key).name,
+        price = this.findFish(order_key).price;
+
+    return (
+      <li key={i}>
+        <span>{count}</span>
+        <span>Ibs</span>
+        <span>{name}</span>
+        <span className="price">{h.formatPrice(price)}</span>
+      </li>
+    )
+  },
+  render: function() {
+    var total = this.total();
+
+    return (
+      <div className="order-wrap">
+        <h2 className="order-title">Your Order</h2>
+        <ul className="order">
+          {this.orderIds().map(this.renderOrder)}
+          <li className="total">
+            <strong>Total: </strong>
+            <span>{h.formatPrice(total)}</span>
+          </li>
+        </ul>
       </div>
     )
   },
@@ -60,11 +125,13 @@ var App = React.createClass({
 var Fish = React.createClass({
   clickButton: function(e) {
     e.preventDefault();
-    console.log('hi')
+
+    var fish = this.props.index;
+    this.props.addToOrder(fish);
   },
   render: function() {
     var fish = this.props.data;
-    var isAvailable = (fish.status === "available" ? true : false);
+    var isAvailable = !!(fish.available);
     var buttonText = (isAvailable ? "Add to Order" : "Sold Out!")
     return (
       <li className="menu-fish">
@@ -141,14 +208,6 @@ var Header = React.createClass({
           <span>{this.props.tagline}</span>
         </h3>
       </header>
-    )
-  },
-});
-
-var Order = React.createClass({
-  render: function() {
-    return (
-      <p>Order</p>
     )
   },
 });
