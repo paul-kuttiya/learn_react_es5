@@ -154,20 +154,22 @@ var Fish = React.createClass({
 var Inventory = React.createClass({
   handleInput: function(param, e) {
     var value = e.target.value,
-        key = e.target.getAttribute('name');
+        key = e.target.parentNode.getAttribute('name');
 
     this.props.updateInventory(key, param, value);
   },
   renderInventory: function(key) {
     var fish = this.props.fishes[key];
     return (
-      <div className="fish-edit" key={key}>
-        <input type="text" name={key} value={fish.name} onChange={this.handleInput.bind(this, 'name')}/>
-        <input type="text" name={key} value={fish.price} onChange={this.handleInput.bind(this, 'price')}/>
-        <select name={key} value={fish.available} onChange={this.handleInput.bind(this, 'available')}>
+      <div className="fish-edit" name={key} key={key}>
+        <input type="text" value={fish.name} onChange={this.handleInput.bind(this, 'name')}/>
+        <input type="text" value={fish.price} onChange={this.handleInput.bind(this, 'price')}/>
+        <select value={fish.available} onChange={this.handleInput.bind(this, 'available')}>
           <option value={false}>Sold Out!</option>
           <option value={true}>Fresh!</option>
         </select>
+        <textarea value={fish.desc} onChange={this.handleInput.bind(this, 'desc')}></textarea>
+        <input type="text" value={fish.image} onChange={this.handleInput.bind(this, 'image')}/>
       </div>
     )
   },
@@ -251,7 +253,7 @@ var StorePicker = React.createClass({
       <form className="store-selector" onSubmit={this.goToStore}>
         <h2>Select Store</h2>
         <input type="text" ref="storeId" defaultValue={h.getFunName()} required />
-        <input type="submit" />        
+        <input type="submit" />      
       </form>
     )
   },
