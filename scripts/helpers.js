@@ -1,4 +1,10 @@
 let helpers =  {
+  stringBoolean: function(string) {
+    if (string === "true" || string === true) {
+      return true
+    }
+    return false
+  },
   formatPrice :  function(cents) {
     return '$' + ( (cents / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",") );
   },

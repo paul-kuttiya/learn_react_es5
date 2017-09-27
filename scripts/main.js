@@ -45,7 +45,7 @@ var App = React.createClass({
     this.state.fishes['fish' + timestamp] = fish;
 
     //set state
-    this.setState({ fishes: this.state.fishes })
+    this.setState({ fishes: this.state.fishes });
   },
   loadSample: function() {
     this.setState( {fishes: sampleData} );
@@ -54,6 +54,10 @@ var App = React.createClass({
     return (
       <Fish key={i + 1} index={key} data={this.state.fishes[key]} addToOrder={this.addToOrder} />
     )
+  },
+  updateInventory: function(key, param, newValue) {
+    this.state.fishes[key][param] = newValue
+    this.setState({ fishes: this.state.fishes });
   },
   render: function() {
     return (
@@ -65,7 +69,7 @@ var App = React.createClass({
           </ul>
         </div>
         <Order fishes={this.state.fishes} order={this.state.order} />
-        <Inventory loadSample={this.loadSample} addToOrder={this.addToOrder} />
+        <Inventory updateInventory={this.updateInventory} fishes={this.state.fishes} loadSample={this.loadSample} addToOrder={this.addToOrder} />
       </div>
     )
   },
@@ -131,7 +135,7 @@ var Fish = React.createClass({
   },
   render: function() {
     var fish = this.props.data;
-    var isAvailable = !!(fish.available);
+    var isAvailable = h.stringBoolean(fish.available);
     var buttonText = (isAvailable ? "Add to Order" : "Sold Out!")
     return (
       <li className="menu-fish">
@@ -148,10 +152,30 @@ var Fish = React.createClass({
 });
 
 var Inventory = React.createClass({
+  handleInput: function(param, e) {
+    var value = e.target.value,
+        key = e.target.getAttribute('name');
+
+    this.props.updateInventory(key, param, value);
+  },
+  renderInventory: function(key) {
+    var fish = this.props.fishes[key];
+    return (
+      <div className="fish-edit" key={key}>
+        <input type="text" name={key} value={fish.name} onChange={this.handleInput.bind(this, 'name')}/>
+        <input type="text" name={key} value={fish.price} onChange={this.handleInput.bind(this, 'price')}/>
+        <select name={key} value={fish.available} onChange={this.handleInput.bind(this, 'available')}>
+          <option value={false}>Sold Out!</option>
+          <option value={true}>Fresh!</option>
+        </select>
+      </div>
+    )
+  },
   render: function() {
     return (
       <div>
-        <h3>Inventory</h3>
+        <h2>Inventory</h2>
+        {Object.keys(this.props.fishes).map(this.renderInventory)}
         <AddFishForm addFish={this.props.addFish} />
         <button onClick={this.props.loadSample}>Load Sample Data</button>
       </div>
