@@ -9,9 +9,22 @@ var ReactRouter = require('react-router'),
     Route = ReactRouter.Route,
     History = ReactRouter.History;
 
-var sampleData = require('./sample-fishes');
-    
 var createBrowserHistory = require('history/lib/createBrowserHistory');
+
+// Firebase
+var Rebase = require('re-base');
+var firebase = require('firebase');
+var app = firebase.initializeApp({
+    apiKey: "AIzaSyDelM234dsNpaFeCePPMBHSwWkaT0yhz1I",
+    authDomain: "leaning-react-es5.firebaseapp.com",
+    databaseURL: "https://leaning-react-es5.firebaseio.com",
+    projectId: "leaning-react-es5",
+    storageBucket: "leaning-react-es5.appspot.com",
+    messagingSenderId: "932575414324"
+});
+var base = Rebase.createClass(app.database());
+
+var sampleData = require('./sample-fishes');
 
 var App = React.createClass({
   getInitialState: function() {
@@ -21,9 +34,12 @@ var App = React.createClass({
     }
   },
   componentDidMount: function() {
-    //load sample when component first initial mount
-    this.loadSample();
+    base.syncState(this.props.params.storeId + '/fishes', {
+      context: this,
+      state: 'fishes'
+    });
 
+    //store order in local storage
     var storage = localStorage.getItem('order-' + this.props.params.storeId);
 
     //check if exists
@@ -47,6 +63,16 @@ var App = React.createClass({
     //set state
     this.setState({ fishes: this.state.fishes });
   },
+  removeInventory: function(key) {
+    this.state.fishes[key] = null;
+    this.removeOrder(key);
+
+    this.setState({fishes: this.state.fishes});
+  },
+  removeOrder: function(key) {
+    delete this.state.order[key];
+    this.setState({order: this.state.order});
+  },
   loadSample: function() {
     this.setState( {fishes: sampleData} );
   },
@@ -68,8 +94,17 @@ var App = React.createClass({
             {Object.keys(this.state.fishes).map(this.renderFish)}
           </ul>
         </div>
-        <Order fishes={this.state.fishes} order={this.state.order} />
-        <Inventory updateInventory={this.updateInventory} fishes={this.state.fishes} loadSample={this.loadSample} addToOrder={this.addToOrder} />
+        <Order 
+        removeOrder={this.removeOrder}
+        fishes={this.state.fishes} 
+        order={this.state.order} />
+        <Inventory 
+        removeInventory={this.removeInventory} 
+        updateInventory={this.updateInventory} 
+        fishes={this.state.fishes} 
+        loadSample={this.loadSample} 
+        addToOrder={this.addToOrder} 
+        addFish={this.addFish} />
       </div>
     )
   },
@@ -96,17 +131,25 @@ var Order = React.createClass({
   },
   renderOrder: function(order_key, i) {
     var count = this.findQuantity(order_key),
+        fish = this.findFish(order_key),
+        name, price;
+    
+    var removeButton = <button onClick={this.props.removeOrder.bind(null, order_key)}>&times;</button>
+
+    if (fish) {
         name = this.findFish(order_key).name,
         price = this.findFish(order_key).price;
 
-    return (
-      <li key={i}>
-        <span>{count}</span>
-        <span>Ibs</span>
-        <span>{name}</span>
-        <span className="price">{h.formatPrice(price)}</span>
-      </li>
-    )
+      return (
+        <li key={i}>
+          <span>{count}</span>
+          <span>Ibs</span>
+          <span>{name}</span>
+          <span className="price">{h.formatPrice(price)}</span>
+          {removeButton}
+        </li>
+      )
+    }
   },
   render: function() {
     var total = this.total();
@@ -170,6 +213,7 @@ var Inventory = React.createClass({
         </select>
         <textarea value={fish.desc} onChange={this.handleInput.bind(this, 'desc')}></textarea>
         <input type="text" value={fish.image} onChange={this.handleInput.bind(this, 'image')}/>
+        <button onClick={this.props.removeInventory.bind(null, key)}>Remove</button>
       </div>
     )
   },
@@ -193,7 +237,7 @@ var AddFishForm = React.createClass({
     var fish = {
       name: this.refs.name.value,
       price: this.refs.price.value,
-      status: this.refs.status.value,
+      available: this.refs.available.value,
       desc: this.refs.desc.value,
       image: this.refs.image.value,
     }
@@ -207,9 +251,9 @@ var AddFishForm = React.createClass({
       <form className="fish-edit" ref="fishForm" onSubmit={this.createFish}>
         <input type="text" ref="name" placeholder="Fish Name"/>
         <input type="text" ref="price" placeholder="Fish Price"/>
-        <select ref="status">
-          <option value="available">Fresh!</option>
-          <option value="unavailable">Sold Out!</option>
+        <select ref="available">
+          <option value={true}>Fresh!</option>
+          <option value={false}>Sold Out!</option>
         </select>
         <textarea type="text" ref="desc" placeholder="Desc"></textarea>
         <input type="text" ref="image" placeholder="image url"/>
