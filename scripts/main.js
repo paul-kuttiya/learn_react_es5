@@ -71,6 +71,7 @@ var App = React.createClass({
   },
   removeOrder: function(key) {
     delete this.state.order[key];
+
     this.setState({order: this.state.order});
   },
   loadSample: function() {
