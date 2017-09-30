@@ -1,6 +1,7 @@
 //import react library with common.js
 var React = require('react');
 var ReactDOM = require('react-dom');
+var CSSTransitionGroup = require('react-addons-css-transition-group');
 
 var h = require('./helpers');
 
@@ -143,7 +144,15 @@ var Order = React.createClass({
 
       return (
         <li key={i}>
-          <span>{count}</span>
+          <CSSTransitionGroup
+            className="count"
+            component="span"
+            transitionName="count"
+            transitionEnterTimeout={250}
+            transitionLeaveTimeout={250}
+          >
+            <span key={count}>{count}</span>
+          </CSSTransitionGroup>
           <span>Ibs</span>
           <span>{name}</span>
           <span className="price">{h.formatPrice(price)}</span>
@@ -158,13 +167,19 @@ var Order = React.createClass({
     return (
       <div className="order-wrap">
         <h2 className="order-title">Your Order</h2>
-        <ul className="order">
+        <CSSTransitionGroup
+          className="order"
+          component="ul"
+          transitionName="order"
+          transitionEnterTimeout={500}
+          transitionLeaveTimeout={500}
+        >
           {this.orderIds().map(this.renderOrder)}
           <li className="total">
             <strong>Total: </strong>
             <span>{h.formatPrice(total)}</span>
           </li>
-        </ul>
+        </CSSTransitionGroup>
       </div>
     )
   },
