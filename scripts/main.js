@@ -7,8 +7,6 @@ import { Route } from 'react-router';
 //browser history
 import { createHistory } from 'history';
 
-var createBrowserHistory = require('history/lib/createBrowserHistory');
-
 import App from "./components/App";
 import StorePicker from "./components/StorePicker";
 import NotFound from "./components/NotFound";
